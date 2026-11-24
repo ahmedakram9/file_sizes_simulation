@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pixel Lab – Resolution &amp; File Size</title>
+<style>
+:root{--bg:#f6f4ef;--ink:#1b2230;--muted:#5b6475;--card:#fff;--line:#e2ddd2;--accent:#d9480f;--accent2:#0b7285;--good:#2b8a3e;--bad:#c92a2a;--warn:#c76a00;--soft:#fff4e6}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:18px;line-height:1.45}
+header{display:flex;align-items:center;gap:14px;padding:12px 22px;background:var(--ink);color:#fff;flex-wrap:wrap;position:sticky;top:0;z-index:5}
+header h1{font-size:21px;margin:0;font-weight:750;white-space:nowrap}
+header h1 span{color:#ffb38a}
+nav{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+nav button{font:inherit;font-size:15px;font-weight:600;border:0;border-radius:999px;padding:8px 13px;background:#2c3547;color:#dfe5ef;cursor:pointer}
+nav button:hover{background:#3a455b}
+nav button.active{background:#ffb38a;color:var(--ink)}
+#fsBtn{font:inherit;font-size:14px;border:1px solid #4a556b;background:transparent;color:#cfd6e2;border-radius:8px;padding:6px 10px;cursor:pointer}
+main{padding:22px;max-width:1300px;margin:0 auto}
+.panel{display:none}.panel.active{display:block}
+h2{margin:0 0 4px;font-size:30px;letter-spacing:-.3px}
+.sub{color:var(--muted);margin:0 0 18px;font-size:18px}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:22px;align-items:start}
+@media(max-width:960px){.layout{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px}
+.card h3{margin:0 0 10px;font-size:19px}
+.stage{display:flex;justify-content:center;align-items:center;background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px}
+canvas.view{width:min(100%,62vh,560px);aspect-ratio:1;image-rendering:pixelated;border-radius:6px;display:block;touch-action:none}
+.stat{display:flex;justify-content:space-between;align-items:baseline;padding:9px 0;border-bottom:1px dashed var(--line);gap:10px}
+.stat:last-child{border-bottom:0}
+.stat b{font-size:24px;font-variant-numeric:tabular-nums;text-align:right}
+.lbl{color:var(--muted);font-size:16px}
+.btn{font:inherit;font-size:16px;font-weight:650;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:10px;padding:9px 14px;cursor:pointer}
+.btn:hover{border-color:#bfb7a6}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{background:#c2410c}
+.btn.teal{background:var(--accent2);border-color:var(--accent2);color:#fff}
+.btn.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.steps{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 4px;justify-content:center}
+.steps button{font:inherit;font-size:15px;font-weight:650;border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 10px;cursor:pointer;font-variant-numeric:tabular-nums}
+.steps button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.tip{background:var(--soft);border:1px solid #ffd8a8;border-radius:12px;padding:12px 14px;font-size:16px;margin-top:14px}
+.tip b{color:var(--accent)}
+details{margin-top:8px}
+summary{cursor:pointer;font-weight:650;color:var(--accent2)}
+select,input[type=number]{font:inherit;font-size:16px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.answer{font-size:28px;font-weight:800;color:var(--good);min-height:1.3em;text-align:center;margin-top:8px}
+.palette{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:6px 0 12px}
+.swatch{aspect-ratio:1;border-radius:8px;border:2px solid #0002;cursor:pointer}
+.swatch.active{outline:3px solid var(--accent);outline-offset:2px}
+.twin{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:760px){.twin{grid-template-columns:1fr}}
+.twin .card{text-align:center}
+.vbox{width:100%;max-width:440px;aspect-ratio:1;margin:0 auto;border:1px solid var(--line);border-radius:8px;overflow:hidden;cursor:grab;touch-action:none;background:#fff}
+.vbox canvas,.vbox svg{width:100%;height:100%;display:block}
+.tag{display:inline-block;font-size:14px;font-weight:700;padding:3px 10px;border-radius:999px;margin-bottom:6px}
+.tag.bmp{background:#ffe3e3;color:var(--bad)}.tag.vec{background:#d3f9d8;color:var(--good)}
+.size{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;margin-top:8px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{position:relative;font:inherit;font-weight:750;font-size:18px;padding:10px 18px;border-radius:10px;border:2px solid var(--line);background:#fff;cursor:pointer;min-width:84px}
+.chip .n{position:absolute;top:-10px;right:-10px;background:var(--accent);color:#fff;border-radius:999px;width:26px;height:26px;font-size:14px;display:grid;place-items:center}
+.chip.picked{border-color:var(--accent)}
+.bars{margin-top:14px}
+.bar{display:grid;grid-template-columns:90px 1fr 120px;align-items:center;gap:10px;margin:8px 0}
+.bar .track{background:#f1ede4;border-radius:6px;height:30px;overflow:hidden}
+.bar .fill{height:100%;border-radius:6px;background:var(--accent2);transition:width .6s ease}
+.bar .v{font-weight:750;font-variant-numeric:tabular-nums;text-align:right}
+.bar .k{font-weight:750}
+.mark{font-size:14px;font-weight:700;margin-left:6px}
+.ok{color:var(--good)}.no{color:var(--bad)}.part{color:var(--warn)}
+.foot{font-size:14px;color:var(--muted);margin-top:10px}
+.crops{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}
+.crops canvas{width:100%;aspect-ratio:1;image-rendering:pixelated;border:1px solid var(--line);border-radius:6px}
+.crops div{text-align:center;font-size:14px;color:var(--muted)}
+.grid3{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.pcard{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;cursor:pointer;transition:transform .1s}
+.pcard:hover{transform:translateY(-2px)}
+.pcard .t{font-weight:750;font-size:19px}
+.pcard .r{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums;margin:6px 0;color:var(--accent2)}
+.pcard .h{font-size:26px;font-weight:800;color:var(--accent);min-height:1.2em;font-variant-numeric:tabular-nums}
+.pcard .q{font-size:14px;color:var(--muted)}
+.jobs{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:16px}
+@media(max-width:420px){.jobs{grid-template-columns:1fr}}
+.job{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.job .t{font-size:20px;font-weight:800}
+.job .d{color:var(--muted);font-size:16px}
+.job label{font-size:14px;font-weight:700;color:var(--muted);display:block;margin-bottom:3px}
+.job .fb{font-size:15px;border-radius:10px;padding:10px 12px;display:none}
+.job .fb.show{display:block}
+.fb.good{background:#ebfbee;border:1px solid #b2f2bb}
+.fb.mid{background:#fff4e6;border:1px solid #ffd8a8}
+.fb.bad{background:#fff5f5;border:1px solid #ffc9c9}
+.brand{display:flex;gap:16px;align-items:center;margin-bottom:16px}
+.brand .logo{width:86px;height:86px;flex:none}
+.score{font-size:22px;font-weight:800}
+.tt{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:16px}
+.ttc{background:#fff;border-radius:16px;overflow:hidden;border:3px solid var(--c);display:flex;flex-direction:column}
+.ttc .hd{background:var(--c);color:#fff;padding:10px 14px;display:flex;justify-content:space-between;align-items:baseline}
+.ttc .hd b{font-size:30px;letter-spacing:.5px}.ttc .hd span{font-size:15px;font-weight:650;opacity:.95}
+.ttc .demo{height:150px;display:grid;place-items:center;background:#f8f9fa;border-bottom:1px solid var(--line);overflow:hidden;position:relative}
+.ttc .demo small{position:absolute;bottom:4px;right:8px;font-size:12px;color:var(--muted);background:#fffc;padding:1px 6px;border-radius:6px}
+.ttc .bd{padding:10px 14px 14px;font-size:15px}
+.ttc .sr{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed var(--line)}
+.ttc .sr b{font-weight:750}
+.pips{display:flex;gap:3px}.pips i{width:14px;height:14px;border-radius:3px;background:#e9ecef}.pips i.f{background:var(--c)}
+.ttc .best{margin-top:8px}.ttc .fact{margin-top:6px;color:var(--muted);font-size:14px}
+.checker{background-color:#fff;background-image:linear-gradient(45deg,#ced4da 25%,transparent 25%),linear-gradient(-45deg,#ced4da 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#ced4da 75%),linear-gradient(-45deg,transparent 75%,#ced4da 75%);background-size:20px 20px;background-position:0 0,0 10px,10px -10px,-10px 0}
+@keyframes zoomy{0%,100%{transform:scale(1)}50%{transform:scale(2.6)}}
+.game .clue{font-size:24px;font-weight:650;padding:10px 14px;border-radius:10px;background:var(--soft);margin:8px 0}
+.game .clue.locked{background:#f1f3f5;color:#adb5bd;font-weight:500}
+.game .ans{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+.game .ans button{font:inherit;font-weight:800;font-size:20px;padding:10px 20px;border-radius:10px;border:2px solid var(--line);background:#fff;cursor:pointer}
+.game .ans button.right{background:#d3f9d8;border-color:var(--good)}.game .ans button.wrong{background:#ffe3e3;border-color:var(--bad);text-decoration:line-through}
+.game .res{font-size:22px;font-weight:800;min-height:1.4em}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<header>
+  <h1>Pixel <span>Lab</span> · Resolution &amp; File Size</h1>
+  <nav id="tabs">
+    <button data-tab="mystery" class="active">1 · Mystery Image</button>
+    <button data-tab="painter">2 · Pixel Painter</button>
+    <button data-tab="maths">3 · Pixel Maths</button>
+    <button data-tab="vector">4 · Bitmap vs Vector</button>
+    <button data-tab="types">5 · File Types</button>
+    <button data-tab="brief">6 · Client Brief</button>
+  </nav>
+  <button id="fsBtn" title="Full screen">⛶</button>
+</header>
+
+<main>
+<!-- 1 MYSTERY -->
+<section class="panel active" id="mystery">
+  <h2>What is it?</h2>
+  <p class="sub">This picture only has a few pixels. Add more pixels until someone can guess it.</p>
+  <div class="layout">
+    <div>
+      <div class="stage"><canvas id="mysCanvas" class="view" width="512" height="512"></canvas></div>
+      <div class="steps" id="mysSteps"></div>
+      <div class="row" style="justify-content:center;margin-top:8px">
+        <button class="btn" id="mysLess">◀ Fewer pixels</button>
+        <button class="btn primary" id="mysMore">More pixels ▶</button>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="stat"><span class="lbl">Resolution</span><b id="mysRes">8 × 8</b></div>
+        <div class="stat"><span class="lbl">Total pixels</span><b id="mysPx">64</b></div>
+        <div class="stat"><span class="lbl">Rough file size<br><small>(each pixel = 3 bytes)</small></span><b id="mysSize">192 B</b></div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <h3>Picture</h3>
+        <div class="row">
+          <select id="mysPick">
+            <option value="0">Mystery picture A</option>
+            <option value="1">Mystery picture B</option>
+            <option value="2">Mystery picture C</option>
+            <option value="3" disabled id="mysOwnOpt">Your own picture</option>
+          </select>
+          <label class="btn" style="display:inline-block">📷 Use your own<input type="file" id="mysFile" accept="image/*" hidden></label>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn" id="mysGrid">Grid: on</button>
+          <button class="btn" id="mysReset">Start again</button>
+          <button class="btn teal" id="mysReveal">Reveal answer</button>
+        </div>
+        <div class="answer" id="mysAnswer"></div>
+      </div>
+      <div class="tip"><b>Ask the class:</b> at what resolution could you first tell what it was? What happened to the file size each time we doubled the width and height?
+        <details><summary>Answer</summary>Each step doubles the width and the height, so there are <b>4×</b> as many pixels, and the file is 4× bigger. More pixels means more detail but a bigger file.</details>
+      </div>
+      <p class="foot">Tip: the ← and → keys change the resolution.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 2 PAINTER -->
+<section class="panel" id="painter">
+  <h2>Pixel Painter</h2>
+  <p class="sub">Every bitmap image is just a grid of coloured squares. Draw one yourself.</p>
+  <div class="layout">
+    <div class="stage"><canvas id="pCanvas" class="view" width="560" height="560" style="cursor:crosshair"></canvas></div>
+    <div>
+      <div class="card">
+        <h3>Grid size (resolution)</h3>
+        <div class="row" id="pSizes"></div>
+        <h3 style="margin-top:14px">Colour</h3>
+        <div class="palette" id="pPalette"></div>
+        <div class="row">
+          <button class="btn primary" id="pSmiley">😀 Load smiley</button>
+          <button class="btn primary" id="pCat">🐱 Load cat</button>
+          <button class="btn" id="pGridBtn">Grid: on</button>
+          <button class="btn" id="pClear">Clear</button>
+        </div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="stat"><span class="lbl">Pixels</span><b id="pPx">256</b></div>
+        <div class="stat"><span class="lbl">Rough file size<br><small>(each pixel = 3 bytes)</small></span><b id="pBytes">768 B</b></div>
+      </div>
+      <div class="tip"><b>Challenge:</b> load the smiley or the cat, then click 8×8 → 16×16 → 32×32 → 64×64. What details appear that weren't there before?
+        <details><summary>Answer</summary>At 8×8 you only get a rough shape. With more pixels the curves get smoother, and small details appear: the eyebrows, the shine in the eyes, rosy cheeks, the cat's whiskers. <b>More pixels = higher resolution = more detail.</b> But 64×64 needs 64 times more pixels than 8×8, so the file is much bigger.</details>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 3 MATHS -->
+<section class="panel" id="maths">
+  <h2>Pixel Maths</h2>
+  <p class="sub">Total pixels = width × height. Work it out on your whiteboard, then click a card to check.</p>
+  <div class="grid3" id="mCards"></div>
+  <div class="layout" style="margin-top:20px">
+    <div class="card">
+      <h3>Drawn to scale</h3>
+      <svg id="mScale" viewBox="0 0 800 470" style="width:100%;height:auto"></svg>
+    </div>
+    <div class="card">
+      <h3>Check any screen</h3>
+      <p class="lbl" style="margin:0 0 8px">Type in any resolution (e.g. look up your own phone or the classroom projector) to check your working.</p>
+      <div class="row"><input type="number" id="mW" value="1920" min="1" style="width:110px"> × <input type="number" id="mH" value="1080" min="1" style="width:110px"></div>
+      <div class="stat" style="margin-top:8px"><span class="lbl">Total pixels</span><b id="mPx"></b></div>
+      <div class="stat"><span class="lbl">Megapixels</span><b id="mMp"></b></div>
+      <div class="stat"><span class="lbl">Rough file size (each pixel = 3 bytes)</span><b id="mSz"></b></div>
+    </div>
+  </div>
+</section>
+
+<!-- 4 VECTOR -->
+<section class="panel" id="vector">
+  <h2>Bitmap vs Vector</h2>
+  <p class="sub">The same café logo stored two ways. Zoom in, and drag either picture to move around.</p>
+  <div class="card" style="margin-bottom:16px">
+    <div class="row" style="gap:18px">
+      <div style="flex:1;min-width:240px"><span class="lbl">Zoom: </span><b id="vZoomLbl">1×</b><input type="range" id="vZoom" min="0" max="5" step="0.05" value="0"></div>
+      <div><span class="lbl">Bitmap resolution</span><br><select id="vRes"><option>32</option><option selected>64</option><option>128</option><option>256</option><option>512</option></select></div>
+      <div><span class="lbl">Bitmap shown as</span><br><button class="btn on" id="vBlocky">Blocky pixels</button> <button class="btn" id="vBlur">Blurry (smoothed)</button></div>
+    </div>
+  </div>
+  <div class="twin">
+    <div class="card"><span class="tag bmp">BITMAP · PNG</span><div class="vbox" id="vBmpBox"><canvas id="vBmp" width="440" height="440"></canvas></div><div class="size" id="vBmpSize">…</div><div class="lbl" id="vBmpNote"></div></div>
+    <div class="card"><span class="tag vec">VECTOR · SVG</span><div class="vbox" id="vSvgBox"></div><div class="size" id="vSvgSize">…</div><div class="lbl">Shapes stored as maths, so it's the same file at any size.</div></div>
+  </div>
+  <div class="tip"><b>Ask the class:</b> Why would the café want its logo as an SVG? When would a bitmap be the better choice?
+    <details><summary>Answer</summary>An SVG logo can go on a business card or a 3-metre sign and stay perfectly sharp, and the file stays small. But photos can't be made from simple shapes, so photos are always bitmaps.</details>
+  </div>
+</section>
+
+<!-- 5 TYPES -->
+<section class="panel" id="types">
+  <h2>Meet the File Types</h2>
+  <p class="sub">The letters after the dot tell you the file type: <b>holiday.jpg</b>, <b>logo.svg</b>, <b>meme.gif</b>. Each type is good at different jobs. Here are the six you need to know.</p>
+  <div class="tt" id="ttCards"></div>
+  <h2 style="margin-top:34px">Who am I? 🕵️</h2>
+  <p class="sub">Clues come one at a time. Guess the file type with fewer clues to score more points: 3 points after one clue, 2 after two, 1 after three.</p>
+  <div class="card game" id="game"></div>
+</section>
+
+<!-- 6 BRIEF -->
+<section class="panel" id="brief">
+  <div class="brand"><div class="logo" id="briefLogo"></div><div><h2>Client brief: The Daily Grind café</h2><p class="sub" style="margin:0">The café needs images for six jobs. For each one, choose the best file type and resolution, then check your answer.</p></div></div>
+  <div class="row" style="margin-bottom:14px"><span class="score" id="bScore">Score: 0 / 6</span><button class="btn" id="bReset">Reset</button><button class="btn teal" id="bAll">Reveal all answers</button></div>
+  <div class="jobs" id="bJobs"></div>
+</section>
+</main>
+
+<script>
+const $=s=>document.querySelector(s);
+const makeCanvas=(w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;return c;};
+function fmtBytes(b){if(b<1024)return Math.round(b)+' B';if(b<1024*1024)return(b/1024).toFixed(b<10240?1:0)+' KB';return(b/1048576).toFixed(2)+' MB';}
+const fmtN=n=>n.toLocaleString('en-GB');
+function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}}
+
+/* ---------- Tabs ---------- */
+let currentTab='mystery';
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('active',x===b));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id===b.dataset.tab));
+  currentTab=b.dataset.tab;
+});
+$('#fsBtn').onclick=()=>{if(!document.fullscreenElement)document.documentElement.requestFullscreen?.();else document.exitFullscreen?.();};
+
+/* ---------- Drawings (512 space) ---------- */
+function drawLighthouse(x){
+  let g=x.createLinearGradient(0,0,0,330);g.addColorStop(0,'#1e3a8a');g.addColorStop(.6,'#c2410c');g.addColorStop(1,'#fbbf24');
+  x.fillStyle=g;x.fillRect(0,0,512,512);
+  x.fillStyle='#fde68a';x.beginPath();x.arc(410,305,48,0,7);x.fill();
+  x.fillStyle='rgba(254,240,138,.4)';
+  x.beginPath();x.moveTo(210,104);x.lineTo(0,30);x.lineTo(0,150);x.closePath();x.fill();
+  x.beginPath();x.moveTo(210,104);x.lineTo(512,50);x.lineTo(512,170);x.closePath();x.fill();
+  let s=x.createLinearGradient(0,320,0,512);s.addColorStop(0,'#0e7490');s.addColorStop(1,'#082f49');x.fillStyle=s;x.fillRect(0,320,512,192);
+  x.strokeStyle='rgba(255,255,255,.45)';x.lineWidth=3;
+  for(let i=0;i<9;i++){let y=342+i*20;x.beginPath();for(let X=0;X<=512;X+=8)x.lineTo(X,y+Math.sin(X/18+i*1.7)*4);x.stroke();}
+  x.fillStyle='#3f3f46';x.beginPath();x.moveTo(80,405);x.quadraticCurveTo(120,325,205,332);x.quadraticCurveTo(290,322,335,405);x.closePath();x.fill();
+  x.fillStyle='#27272a';x.beginPath();x.moveTo(250,405);x.quadraticCurveTo(300,350,335,405);x.closePath();x.fill();
+  x.save();x.beginPath();x.moveTo(175,345);x.lineTo(245,345);x.lineTo(228,130);x.lineTo(192,130);x.closePath();x.clip();
+  for(let i=0;i<7;i++){x.fillStyle=i%2?'#f8fafc':'#dc2626';x.fillRect(150,130+i*36,120,36);}
+  x.fillStyle='rgba(0,0,0,.18)';x.fillRect(222,130,40,220);x.restore();
+  x.fillStyle='#1f2937';x.fillRect(180,120,60,10);
+  x.fillStyle='#fef08a';x.fillRect(193,88,34,32);
+  x.strokeStyle='#1f2937';x.lineWidth=3;x.beginPath();x.moveTo(210,88);x.lineTo(210,120);x.stroke();
+  x.fillStyle='#1f2937';x.beginPath();x.moveTo(186,90);x.lineTo(210,60);x.lineTo(234,90);x.closePath();x.fill();
+  x.fillRect(201,316,18,29);
+  x.strokeStyle='#111827';x.lineWidth=3;x.lineCap='round';
+  [[95,80],[135,60],[330,150],[360,130]].forEach(([a,b])=>{x.beginPath();x.moveTo(a-12,b-6);x.quadraticCurveTo(a-5,b-9,a,b);x.quadraticCurveTo(a+5,b-9,a+12,b-6);x.stroke();});
+}
+function drawBalloon(x){
+  let g=x.createLinearGradient(0,0,0,512);g.addColorStop(0,'#0ea5e9');g.addColorStop(1,'#e0f2fe');x.fillStyle=g;x.fillRect(0,0,512,512);
+  x.fillStyle='#fff';[[90,110],[420,80],[380,260]].forEach(([a,b])=>{[[0,0,26],[24,-10,30],[50,0,24],[24,8,26]].forEach(([dx,dy,r])=>{x.beginPath();x.arc(a+dx,b+dy,r,0,7);x.fill();});});
+  x.fillStyle='#84cc16';x.beginPath();x.ellipse(110,560,320,150,0,0,7);x.fill();
+  x.fillStyle='#4d7c0f';x.beginPath();x.ellipse(440,590,330,170,0,0,7);x.fill();
+  x.save();x.beginPath();x.moveTo(205,318);x.bezierCurveTo(60,240,110,46,256,46);x.bezierCurveTo(402,46,452,240,307,318);x.closePath();x.clip();
+  const cols=['#ef4444','#facc15','#3b82f6','#f97316','#22c55e','#a855f7'];
+  for(let i=0;i<9;i++){x.fillStyle=cols[i%cols.length];x.fillRect(96+i*36,40,36,290);}
+  let r=x.createRadialGradient(200,120,10,256,180,200);r.addColorStop(0,'rgba(255,255,255,.45)');r.addColorStop(1,'rgba(0,0,0,.25)');x.fillStyle=r;x.fillRect(0,0,512,512);x.restore();
+  x.fillStyle='#7c2d12';x.fillRect(205,314,102,12);
+  x.strokeStyle='#44403c';x.lineWidth=3;x.beginPath();x.moveTo(210,326);x.lineTo(234,384);x.moveTo(302,326);x.lineTo(278,384);x.moveTo(256,326);x.lineTo(256,384);x.stroke();
+  x.fillStyle='#92400e';x.fillRect(230,382,52,40);x.strokeStyle='#78350f';x.lineWidth=2;
+  for(let i=1;i<4;i++){x.beginPath();x.moveTo(230,382+i*10);x.lineTo(282,382+i*10);x.stroke();}
+}
+function drawIceCream(x){
+  x.fillStyle='#c4b5fd';x.fillRect(0,0,512,512);
+  x.fillStyle='rgba(255,255,255,.35)';for(let i=0;i<8;i++)for(let j=0;j<8;j++){x.beginPath();x.arc(32+i*64+(j%2)*32,32+j*64,6,0,7);x.fill();}
+  x.save();x.beginPath();x.moveTo(178,262);x.lineTo(334,262);x.lineTo(256,488);x.closePath();x.fillStyle='#d97706';x.fill();x.clip();
+  x.strokeStyle='#92400e';x.lineWidth=4;for(let i=-10;i<20;i++){x.beginPath();x.moveTo(100+i*24,250);x.lineTo(300+i*24,500);x.stroke();x.beginPath();x.moveTo(420-i*24,250);x.lineTo(220-i*24,500);x.stroke();}x.restore();
+  x.fillStyle='#86efac';x.beginPath();x.arc(256,238,86,0,7);x.fill();
+  [[196,300,14,20],[240,312,12,26],[300,302,13,18]].forEach(([a,b,rx,ry])=>{x.beginPath();x.ellipse(a,b,rx,ry,0,0,7);x.fill();});
+  x.fillStyle='#f472b6';x.beginPath();x.arc(256,150,74,0,7);x.fill();
+  x.beginPath();x.ellipse(220,206,12,18,0,0,7);x.fill();x.beginPath();x.ellipse(290,210,11,15,0,0,7);x.fill();
+  const R=rng(3),sc=['#fff','#facc15','#3b82f6','#ef4444','#22c55e'];
+  for(let i=0;i<40;i++){const a=R()*Math.PI*2,d=Math.sqrt(R())*68;x.save();x.translate(256+Math.cos(a)*d,150+Math.sin(a)*d*.9);x.rotate(R()*3);x.fillStyle=sc[i%5];x.fillRect(-7,-2,14,4);x.restore();}
+  x.strokeStyle='#166534';x.lineWidth=4;x.beginPath();x.moveTo(256,64);x.quadraticCurveTo(262,40,284,28);x.stroke();
+  x.fillStyle='#dc2626';x.beginPath();x.arc(256,78,22,0,7);x.fill();
+  x.fillStyle='rgba(255,255,255,.6)';x.beginPath();x.arc(248,70,6,0,7);x.fill();
+}
+const PICS=[{name:'A lighthouse',draw:drawLighthouse},{name:'A hot-air balloon',draw:drawBalloon},{name:'An ice-cream cone',draw:drawIceCream}];
+function drawPic(fn,S){const c=makeCanvas(S,S),x=c.getContext('2d');x.save();x.scale(S/512,S/512);fn(x);x.restore();return c;}
+function cropSquare(img,S){const c=makeCanvas(S,S),x=c.getContext('2d');const m=Math.min(img.naturalWidth,img.naturalHeight);x.imageSmoothingQuality='high';x.drawImage(img,(img.naturalWidth-m)/2,(img.naturalHeight-m)/2,m,m,0,0,S,S);return c;}
+function loadFile(file){return new Promise((res,rej)=>{const img=new Image();img.onload=()=>res(img);img.onerror=rej;img.src=URL.createObjectURL(file);});}
+
+/* ---------- Logo ---------- */
+const LOGO_SVG=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+<circle cx="100" cy="100" r="97" fill="#1b2230"/>
+<circle cx="100" cy="100" r="88" fill="none" stroke="#f2c14e" stroke-width="2.5"/>
+<path d="M80 68q-7-9 0-18t0-18M96 64q-7-9 0-18t0-18M112 68q-7-9 0-18t0-18" fill="none" stroke="#f2c14e" stroke-width="4" stroke-linecap="round"/>
+<path d="M62 78H128V110Q128 138 95 138Q62 138 62 110Z" fill="#f6f4ef"/>
+<path d="M128 88Q147 88 147 102Q147 116 128 116" fill="none" stroke="#f6f4ef" stroke-width="7"/>
+<ellipse cx="95" cy="143" rx="46" ry="6" fill="#f6f4ef"/>
+<path d="M82 98q13 10 26 0" fill="none" stroke="#d9480f" stroke-width="4" stroke-linecap="round"/>
+<text x="100" y="170" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="17" letter-spacing="2" fill="#f2c14e">DAILY GRIND</text>
+<text x="100" y="184" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="7" letter-spacing="1.5" fill="#f6f4ef">EST. 2026 · FRESH COFFEE</text>
+</svg>`;
+const logoImg=new Promise(res=>{const i=new Image();i.onload=()=>res(i);i.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(LOGO_SVG);});
+$('#briefLogo').innerHTML=LOGO_SVG;
+
+/* ---------- 1 Mystery ---------- */
+const RES=[2,4,8,16,32,64,128,256,512];
+const mys={src:null,pyr:null,ri:2,grid:true,pic:0,own:null};
+const mctx=$('#mysCanvas').getContext('2d');
+function buildPyramid(src){const p={512:src};let c=src,s=512;while(s>1){const n=makeCanvas(s/2,s/2),x=n.getContext('2d');x.imageSmoothingEnabled=true;x.imageSmoothingQuality='high';x.drawImage(c,0,0,s/2,s/2);s/=2;p[s]=n;c=n;}return p;}
+function mysSetSrc(c){mys.src=c;mys.pyr=buildPyramid(c);$('#mysAnswer').textContent='';mysRender();}
+function mysRender(){
+  const r=RES[mys.ri],small=mys.pyr[r];
+  mctx.imageSmoothingEnabled=false;mctx.clearRect(0,0,512,512);mctx.drawImage(small,0,0,r,r,0,0,512,512);
+  if(mys.grid&&r<=32){mctx.strokeStyle='rgba(0,0,0,.28)';mctx.lineWidth=1;mctx.beginPath();for(let i=1;i<r;i++){const p=Math.round(i*512/r)+.5;mctx.moveTo(p,0);mctx.lineTo(p,512);mctx.moveTo(0,p);mctx.lineTo(512,p);}mctx.stroke();}
+  $('#mysRes').textContent=r+' × '+r;$('#mysPx').textContent=fmtN(r*r);$('#mysSize').textContent=fmtBytes(r*r*3);
+  document.querySelectorAll('#mysSteps button').forEach((b,i)=>b.classList.toggle('active',i===mys.ri));
+}
+RES.forEach((r,i)=>{const b=document.createElement('button');b.textContent=r+'×'+r;b.onclick=()=>{mys.ri=i;mysRender();};$('#mysSteps').appendChild(b);});
+$('#mysMore').onclick=()=>{mys.ri=Math.min(RES.length-1,mys.ri+1);mysRender();};
+$('#mysLess').onclick=()=>{mys.ri=Math.max(0,mys.ri-1);mysRender();};
+$('#mysReset').onclick=()=>{mys.ri=1;$('#mysAnswer').textContent='';mysRender();};
+$('#mysGrid').onclick=e=>{mys.grid=!mys.grid;e.target.textContent='Grid: '+(mys.grid?'on':'off');mysRender();};
+$('#mysReveal').onclick=()=>{$('#mysAnswer').textContent=mys.pic<3?PICS[mys.pic].name+'!':'Your picture!';mys.ri=RES.length-1;mysRender();};
+$('#mysPick').onchange=e=>{mys.pic=+e.target.value;mys.ri=1;mysSetSrc(mys.pic<3?drawPic(PICS[mys.pic].draw,512):mys.own);};
+$('#mysFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;const img=await loadFile(f);mys.own=cropSquare(img,512);$('#mysOwnOpt').disabled=false;$('#mysPick').value='3';mys.pic=3;mys.ri=1;mysSetSrc(mys.own);};
+document.addEventListener('keydown',e=>{if(currentTab!=='mystery'||e.target.tagName==='SELECT'||e.target.tagName==='INPUT')return;if(e.key==='ArrowRight')$('#mysMore').click();if(e.key==='ArrowLeft')$('#mysLess').click();});
+mys.ri=1;mysSetSrc(drawPic(drawLighthouse,512));
+
+/* ---------- 2 Painter ---------- */
+const PAL=['#1b2230','#ffffff','#e03131','#f08c00','#fcc419','#2f9e44','#1c7ed6','#7048e8','#e64980','#8d5524','#f1c27d','#868e96','#99e9f2','#b2f2bb'];
+const pnt={N:16,grid:true,col:PAL[0],cells:new Array(256).fill('#ffffff'),down:false,pic:null};
+const pc=$('#pCanvas'),pctx=pc.getContext('2d');
+const hex2rgb=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+const PIX={
+ smiley:{pal:['#ffffff','#fcc419','#e67700','#1b2230','#ff8787','#e64980','#fff3bf'],draw:x=>{
+  x.fillStyle='#fff';x.fillRect(0,0,100,100);
+  x.fillStyle='#fcc419';x.beginPath();x.arc(50,50,44,0,7);x.fill();x.lineWidth=4;x.strokeStyle='#e67700';x.stroke();
+  x.fillStyle='#fff3bf';x.beginPath();x.ellipse(30,24,9,5,-0.6,0,7);x.fill();
+  x.strokeStyle='#1b2230';x.lineWidth=3;x.lineCap='round';
+  [36,64].forEach(cx=>{x.beginPath();x.arc(cx,34,8,Math.PI*1.2,Math.PI*1.8);x.stroke();});
+  x.fillStyle='#1b2230';[36,64].forEach(cx=>{x.beginPath();x.ellipse(cx,43,5,8,0,0,7);x.fill();});
+  x.fillStyle='#fff';[37.5,65.5].forEach(cx=>{x.beginPath();x.arc(cx,39.5,2,0,7);x.fill();});
+  x.fillStyle='#ff8787';[23,77].forEach(cx=>{x.beginPath();x.ellipse(cx,59,7,4.5,0,0,7);x.fill();});
+  x.fillStyle='#1b2230';x.beginPath();x.moveTo(30,61);x.quadraticCurveTo(50,94,70,61);x.closePath();x.fill();
+  x.save();x.clip();x.fillStyle='#e64980';x.beginPath();x.ellipse(50,80,12,7,0,0,7);x.fill();x.fillStyle='#fff';x.fillRect(28,59,44,5);x.restore();}},
+ cat:{pal:['#ffffff','#868e96','#495057','#faa2c1','#f1f3f5','#40c057','#1b2230','#e64980'],draw:x=>{
+  x.fillStyle='#fff';x.fillRect(0,0,100,100);
+  const tri=(a,b,c,col)=>{x.fillStyle=col;x.beginPath();x.moveTo(...a);x.lineTo(...b);x.lineTo(...c);x.closePath();x.fill();};
+  tri([12,42],[18,5],[45,24],'#868e96');tri([88,42],[82,5],[55,24],'#868e96');
+  tri([20,33],[23,14],[37,25],'#faa2c1');tri([80,33],[77,14],[63,25],'#faa2c1');
+  x.fillStyle='#868e96';x.beginPath();x.ellipse(50,57,40,36,0,0,7);x.fill();
+  x.fillStyle='#495057';[[44,22,3,11],[49,21,3,13],[54,22,3,11]].forEach(r=>x.fillRect(...r));
+  x.fillStyle='#f1f3f5';[42,58].forEach(cx=>{x.beginPath();x.ellipse(cx,72,11,9,0,0,7);x.fill();});
+  [35,65].forEach(cx=>{x.fillStyle='#40c057';x.beginPath();x.ellipse(cx,50,8,9,0,0,7);x.fill();x.fillStyle='#1b2230';x.beginPath();x.ellipse(cx,50,2.5,7,0,0,7);x.fill();x.fillStyle='#fff';x.beginPath();x.arc(cx+2.5,46,1.8,0,7);x.fill();});
+  tri([45,63],[55,63],[50,69],'#e64980');
+  x.strokeStyle='#1b2230';x.lineCap='round';x.lineWidth=2;x.beginPath();x.moveTo(50,69);x.quadraticCurveTo(46,76,41,73);x.moveTo(50,69);x.quadraticCurveTo(54,76,59,73);x.stroke();
+  x.lineWidth=1.6;x.beginPath();[[34,68,3,61],[34,72,2,73],[66,68,97,61],[66,72,98,73]].forEach(([a,b,c,d])=>{x.moveTo(a,b);x.lineTo(c,d);});x.stroke();}}
+};
+const HAND8={smiley:{m:['..YYYY..','.YYYYYY.','YYKYYKYY','YYKYYKYY','YYYYYYYY','YKYYYYKY','.YKKKKY.','..YYYY..'],k:{'.':'#ffffff',Y:'#fcc419',K:'#1b2230'}},
+ cat:{m:['G......G','GP....PG','GGGGGGGG','GEGGGGEG','GGGPPGGG','GWWWWWWG','.GWWWWG.','..GGGG..'],k:{'.':'#ffffff',G:'#868e96',P:'#faa2c1',E:'#40c057',W:'#f1f3f5'}}};
+function renderPic(name,N){if(N===8&&HAND8[name]){const h=HAND8[name];return h.m.join('').split('').map(ch=>h.k[ch]);}
+  const P=PIX[name],K=8,S=N*K,c=makeCanvas(S,S),x=c.getContext('2d');x.scale(S/100,S/100);P.draw(x);
+  const d=x.getImageData(0,0,S,S).data,pal=P.pal.map(hex2rgb),out=[];
+  const near=i=>{let best=0,bd=1e9;for(let j=0;j<pal.length;j++){const p=pal[j],dd=(p[0]-d[i])**2+(p[1]-d[i+1])**2+(p[2]-d[i+2])**2;if(dd<bd){bd=dd;best=j;}}return best;};
+  for(let by=0;by<N;by++)for(let bx=0;bx<N;bx++){const cnt=new Array(pal.length).fill(0);
+    for(let y=0;y<K;y++)for(let xx=0;xx<K;xx++){const j=near(((by*K+y)*S+bx*K+xx)*4);cnt[j]+=j===0?0.7:1;}
+    let m=0;cnt.forEach((v,j)=>{if(v>cnt[m])m=j;});out.push(P.pal[m]);}
+  return out;}
+function pDraw(){const N=pnt.N,D=pc.width,c=D/N;pctx.clearRect(0,0,D,D);
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++){pctx.fillStyle=pnt.cells[y*N+x];pctx.fillRect(Math.floor(x*c),Math.floor(y*c),Math.ceil(c)+1,Math.ceil(c)+1);}
+  if(pnt.grid&&N<=64){pctx.strokeStyle=N>32?'rgba(0,0,0,.1)':'rgba(0,0,0,.2)';pctx.lineWidth=1;pctx.beginPath();for(let i=0;i<=N;i++){const p=Math.round(i*c)+.5;pctx.moveTo(p,0);pctx.lineTo(p,D);pctx.moveTo(0,p);pctx.lineTo(D,p);}pctx.stroke();}
+  $('#pPx').textContent=N+' × '+N+' = '+fmtN(N*N);$('#pBytes').textContent=fmtBytes(N*N*3);
+  document.querySelectorAll('#pSizes button').forEach(b=>b.classList.toggle('on',+b.dataset.n===N));}
+function pResize(N){if(pnt.pic){pnt.N=N;pnt.cells=renderPic(pnt.pic,N);pDraw();return;}
+  const o=pnt.cells,oN=pnt.N,n=new Array(N*N);for(let y=0;y<N;y++)for(let x=0;x<N;x++)n[y*N+x]=o[Math.floor(y*oN/N)*oN+Math.floor(x*oN/N)];pnt.cells=n;pnt.N=N;pDraw();}
+[8,16,32,64].forEach(n=>{const b=document.createElement('button');b.className='btn';b.dataset.n=n;b.textContent=n+'×'+n;b.onclick=()=>pResize(n);$('#pSizes').appendChild(b);});
+PAL.forEach((c,i)=>{const s=document.createElement('div');s.className='swatch'+(i===0?' active':'');s.style.background=c;s.onclick=()=>{pnt.col=c;document.querySelectorAll('.swatch').forEach(w=>w.classList.toggle('active',w===s));};$('#pPalette').appendChild(s);});
+function pPaint(e){const r=pc.getBoundingClientRect();const x=Math.floor((e.clientX-r.left)/r.width*pnt.N),y=Math.floor((e.clientY-r.top)/r.height*pnt.N);if(x<0||y<0||x>=pnt.N||y>=pnt.N)return;const i=y*pnt.N+x;if(pnt.cells[i]!==pnt.col){pnt.cells[i]=pnt.col;pnt.pic=null;pDraw();}}
+pc.addEventListener('pointerdown',e=>{pnt.down=true;pc.setPointerCapture(e.pointerId);pPaint(e);});
+pc.addEventListener('pointermove',e=>{if(pnt.down)pPaint(e);});
+pc.addEventListener('pointerup',()=>pnt.down=false);pc.addEventListener('pointercancel',()=>pnt.down=false);
+$('#pClear').onclick=()=>{pnt.pic=null;pnt.cells.fill('#ffffff');pDraw();};
+$('#pGridBtn').onclick=e=>{pnt.grid=!pnt.grid;e.target.textContent='Grid: '+(pnt.grid?'on':'off');pDraw();};
+const pLoad=name=>{pnt.pic=name;pnt.N=8;pnt.cells=renderPic(name,8);pDraw();};
+$('#pSmiley').onclick=()=>pLoad('smiley');$('#pCat').onclick=()=>pLoad('cat');
+pDraw();
+
+/* ---------- 3 Maths ---------- */
+const SCREENS=[{t:'Webcam',w:640,h:480,c:'#868e96'},{t:'HD TV',w:1280,h:720,c:'#1c7ed6'},{t:'Full HD monitor',w:1920,h:1080,c:'#2f9e44'},{t:'4K TV',w:3840,h:2160,c:'#d9480f'},{t:'Phone camera (12 MP)',w:4032,h:3024,c:'#7048e8'}];
+SCREENS.forEach(s=>{const d=document.createElement('div');d.className='pcard';d.innerHTML=`<div class="t">${s.t}</div><div class="r">${fmtN(s.w)} × ${fmtN(s.h)}</div><div class="h"></div><div class="q">Click to reveal total pixels</div>`;d.onclick=()=>{const h=d.querySelector('.h');if(h.textContent){h.textContent='';d.querySelector('.q').textContent='Click to reveal total pixels';}else{h.textContent=fmtN(s.w*s.h);d.querySelector('.q').textContent='≈ '+(s.w*s.h/1e6).toFixed(1)+' million pixels · '+fmtBytes(s.w*s.h*3)+' file size (roughly)';}};$('#mCards').appendChild(d);});
+(()=>{const d=document.createElement('div');d.className='pcard';d.style.borderColor='#ffd8a8';d.style.background='#fff9f2';d.innerHTML=`<div class="t">Challenge 🧠</div><div class="q" style="font-size:16px;color:var(--ink);margin:6px 0">A 4K TV is 2× as wide and 2× as tall as Full HD. Does it have 2× as many pixels?</div><div class="h"></div><div class="q">Click to reveal</div>`;d.onclick=()=>{const h=d.querySelector('.h');if(h.textContent){h.textContent='';d.querySelector('.q:last-child').textContent='Click to reveal';}else{h.textContent='No – 4× as many!';d.querySelector('.q:last-child').textContent='8,294,400 ÷ 2,073,600 = 4. Double the width AND the height and you get 2 × 2 = 4 times the pixels. Look at the scale drawing below.';}};$('#mCards').appendChild(d);})();
+(()=>{const svg=$('#mScale'),maxW=4032,maxH=3024,k=Math.min(780/maxW,450/maxH),ox=10,oy=460;let h='';
+  [...SCREENS].sort((a,b)=>b.w*b.h-a.w*a.h).forEach(s=>{const w=s.w*k,hh=s.h*k;h+=`<rect x="${ox}" y="${oy-hh}" width="${w}" height="${hh}" fill="${s.c}" fill-opacity=".14" stroke="${s.c}" stroke-width="2.5"/><text x="${ox+w-6}" y="${oy-hh+18}" text-anchor="end" font-size="15" font-weight="700" fill="${s.c}">${s.t}</text>`;});svg.innerHTML=h;})();
+function mCalc(){const w=Math.max(0,+$('#mW').value||0),h=Math.max(0,+$('#mH').value||0);$('#mPx').textContent=fmtN(w*h);$('#mMp').textContent=(w*h/1e6).toFixed(2)+' MP';$('#mSz').textContent=fmtBytes(w*h*3);}
+$('#mW').oninput=mCalc;$('#mH').oninput=mCalc;mCalc();
+
+/* ---------- 4 Vector ---------- */
+const vec={res:64,zoom:1,cx:100,cy:172,blur:false,bmp:null};
+const vbc=$('#vBmp'),vbx=vbc.getContext('2d');
+$('#vSvgBox').innerHTML=LOGO_SVG;const vSvg=$('#vSvgBox svg');
+$('#vSvgSize').textContent=fmtBytes(new Blob([LOGO_SVG]).size)+' at any size';
+async function vBuild(){const img=await logoImg;const r=vec.res,c=makeCanvas(r,r),x=c.getContext('2d');x.drawImage(img,0,0,r,r);vec.bmp=c;vDraw();
+  c.toBlob(b=>{$('#vBmpSize').textContent=fmtBytes(b.size)+' at '+r+' × '+r;$('#vBmpNote').textContent=fmtN(r*r)+' pixels. Double the resolution and you get 4× the pixels.';},'image/png');}
+function vDraw(){if(!vec.bmp)return;const s=200/vec.zoom,cx=Math.min(200-s/2,Math.max(s/2,vec.cx)),cy=Math.min(200-s/2,Math.max(s/2,vec.cy));const x0=cx-s/2,y0=cy-s/2,D=vbc.width,k=vec.res/200;
+  vbx.fillStyle='#fff';vbx.fillRect(0,0,D,D);vbx.imageSmoothingEnabled=vec.blur;vbx.imageSmoothingQuality='high';vbx.drawImage(vec.bmp,x0*k,y0*k,s*k,s*k,0,0,D,D);
+  vSvg.setAttribute('viewBox',`${x0} ${y0} ${s} ${s}`);}
+$('#vZoom').oninput=e=>{vec.zoom=2**(+e.target.value);$('#vZoomLbl').textContent=(vec.zoom<10?vec.zoom.toFixed(1):Math.round(vec.zoom))+'×';vDraw();};
+$('#vRes').onchange=e=>{vec.res=+e.target.value;vBuild();};
+$('#vBlocky').onclick=()=>{vec.blur=false;$('#vBlocky').classList.add('on');$('#vBlur').classList.remove('on');vDraw();};
+$('#vBlur').onclick=()=>{vec.blur=true;$('#vBlur').classList.add('on');$('#vBlocky').classList.remove('on');vDraw();};
+['#vBmpBox','#vSvgBox'].forEach(id=>{const el=$(id);let st=null;
+  el.addEventListener('pointerdown',e=>{const s=200/vec.zoom;vec.cx=Math.min(200-s/2,Math.max(s/2,vec.cx));vec.cy=Math.min(200-s/2,Math.max(s/2,vec.cy));st={x:e.clientX,y:e.clientY,cx:vec.cx,cy:vec.cy};el.setPointerCapture(e.pointerId);el.style.cursor='grabbing';});
+  el.addEventListener('pointermove',e=>{if(!st)return;const r=el.getBoundingClientRect(),s=200/vec.zoom;vec.cx=Math.min(200-s/2,Math.max(s/2,st.cx-(e.clientX-st.x)/r.width*s));vec.cy=Math.min(200-s/2,Math.max(s/2,st.cy-(e.clientY-st.y)/r.height*s));vDraw();});
+  const end=()=>{st=null;el.style.cursor='grab';};el.addEventListener('pointerup',end);el.addEventListener('pointercancel',end);});
+vBuild();
+
+/* ---------- 5 File types ---------- */
+const TYPES=[
+ {ext:'JPG',nick:'The Photographer',c:'#1c7ed6',demo:'jpg',size:'Small',n:2,colours:'Millions',see:'no',move:'no',zoom:'no',best:'Photos: cameras, phones and websites',fact:'Almost every photo your phone takes is saved as a JPG.',cap:'a photo'},
+ {ext:'PNG',nick:'The See-Through One',c:'#2f9e44',demo:'png',size:'Small–medium',n:3,colours:'Millions',see:'yes',move:'no',zoom:'no',best:'Logos, screenshots and anything needing a see-through background',fact:'PNG was invented to replace GIF.',cap:'see-through corners'},
+ {ext:'GIF',nick:'The Animator',c:'#e64980',demo:'gif',size:'Small',n:2,colours:'Only 256',see:'yes',move:'yes',zoom:'no',best:'Simple animations, memes and pictures with big blocks of colour',fact:'GIF was invented in 1987, before the World Wide Web!',cap:'it moves!'},
+ {ext:'SVG',nick:'The Shape-Shifter',c:'#7048e8',demo:'svg',size:'Tiny',n:1,colours:'Any (flat shapes)',see:'yes',move:'sometimes',zoom:'yes',best:'Logos, icons and signs that need to work at any size',fact:'SVG = Scalable Vector Graphics. It stores shapes as maths, not pixels.',cap:'zooming… still sharp'},
+ {ext:'BMP',nick:'The Old-Timer',c:'#868e96',demo:'bmp',size:'Large',n:4,colours:'Millions',see:'no',move:'no',zoom:'no',best:'Not much these days, so you rarely see it',fact:'BMP = Bitmap. It saves every single pixel exactly, which makes files big.',cap:'heavy!'},
+ {ext:'TIFF',nick:'The Printer',c:'#d9480f',demo:'tiff',size:'Very large',n:5,colours:'Millions',see:'yes',move:'no',zoom:'no',best:'Professional printing: magazines, posters, menus',fact:'Print shops ask for TIFF because it keeps the very best quality.',cap:'print quality'}];
+const yn=v=>v==='yes'?'<span class="ok">✔ Yes</span>':v==='no'?'<span class="no">✘ No</span>':'<span class="part">~ Sometimes</span>';
+TYPES.forEach(t=>{const d=document.createElement('div');d.className='ttc';d.style.setProperty('--c',t.c);
+  d.innerHTML=`<div class="hd"><b>.${t.ext.toLowerCase()}</b><span>${t.nick}</span></div><div class="demo" data-demo="${t.demo}"><small>${t.cap}</small></div>
+  <div class="bd"><div class="sr"><span>File size</span><span class="pips">${[1,2,3,4,5].map(i=>`<i class="${i<=t.n?'f':''}"></i>`).join('')}</span></div>
+  <div class="sr"><span>Size</span><b>${t.size}</b></div><div class="sr"><span>Colours</span><b>${t.colours}</b></div>
+  <div class="sr"><span>See-through background?</span>${yn(t.see)}</div><div class="sr"><span>Can it move?</span>${yn(t.move)}</div><div class="sr"><span>Zoom without going blocky?</span>${yn(t.zoom)}</div>
+  <div class="best"><b>Best for:</b> ${t.best}</div><div class="fact">💡 ${t.fact}</div></div>`;
+  $('#ttCards').appendChild(d);
+  const demo=d.querySelector('.demo');
+  if(t.demo==='jpg'){const c=drawPic(drawLighthouse,300);c.style.cssText='width:100%;height:100%;object-fit:cover';demo.prepend(c);}
+  if(t.demo==='png'){demo.classList.add('checker');const w=document.createElement('div');w.style.cssText='width:120px;height:120px';w.innerHTML=LOGO_SVG;demo.prepend(w);}
+  if(t.demo==='svg'){const w=document.createElement('div');w.style.cssText='width:120px;height:120px;animation:zoomy 4s ease-in-out infinite';w.innerHTML=LOGO_SVG;demo.prepend(w);}
+  if(t.demo==='gif'){const c=makeCanvas(16,16);c.style.cssText='width:128px;height:128px;image-rendering:pixelated';demo.prepend(c);const x=c.getContext('2d');let f=0;const ys=[2,3,5,8,10,8,5,3];
+    setInterval(()=>{x.fillStyle='#fff0f6';x.fillRect(0,0,16,16);x.fillStyle='#c2255c';x.fillRect(0,15,16,1);const y=ys[f%8],sq=y===10?1:0;x.fillStyle='#e64980';x.fillRect(5-sq,y+sq,6+2*sq,5-sq);x.fillRect(6-sq,y-1+sq,4+2*sq,1);x.fillRect(6-sq,y+5,4+2*sq,(1-sq));x.fillStyle='#fff';x.fillRect(6,y+1+sq,1,1);f++;},110);}
+  if(t.demo==='bmp'){demo.innerHTML='<div style="font-size:84px;line-height:1">🐘</div>'+demo.innerHTML;}
+  if(t.demo==='tiff'){demo.innerHTML='<div style="font-size:84px;line-height:1">🖨️</div>'+demo.innerHTML;}
+});
+const ROUNDS=[
+ {a:'GIF',c:['I can move!','I can only use 256 colours.','Memes and reaction pictures love me.']},
+ {a:'SVG',c:["I'm not made of pixels at all.",'Zoom in as much as you like and I never go blocky.','Logos and icons love me.']},
+ {a:'JPG',c:['Your phone camera saves me every time you take a photo.','I keep photo files small.',"I can't have a see-through background."]},
+ {a:'TIFF',c:["I'm VERY big.",'I keep the very best quality.','Print shops love me.']},
+ {a:'PNG',c:['I can have a see-through background.','Screenshots are often saved as me.','I was made to replace GIF.']},
+ {a:'BMP',c:["I'm big and old-fashioned.",'I save every single pixel exactly.',"You'll rarely see me on a website."]}];
+const gm={r:0,shown:1,done:false,score:0,tried:[]};
+function gRender(){const R=ROUNDS[gm.r],g=$('#game');
+  g.innerHTML=`<div class="row" style="justify-content:space-between"><b class="lbl">Round ${gm.r+1} of ${ROUNDS.length}</b><span class="score">Class score: ${gm.score}</span></div>
+  ${R.c.map((c,i)=>i<gm.shown||gm.done?`<div class="clue">${i+1}. ${c}</div>`:`<div class="clue locked">🔒 Clue ${i+1}</div>`).join('')}
+  <div class="ans">${TYPES.map(t=>`<button data-k="${t.ext}" class="${gm.done&&t.ext===R.a?'right':gm.tried.includes(t.ext)?'wrong':''}">.${t.ext.toLowerCase()}</button>`).join('')}</div>
+  <div class="res" id="gRes"></div>
+  <div class="row">${!gm.done&&gm.shown<3?'<button class="btn" id="gNext">Next clue 🔓</button>':''}${!gm.done?'<button class="btn" id="gGive">Show answer</button>':''}${gm.done?`<button class="btn primary" id="gRound">${gm.r<ROUNDS.length-1?'Next round ▶':'Play again ↺'}</button>`:''}</div>`;
+  g.querySelectorAll('.ans button').forEach(b=>b.onclick=()=>{if(gm.done)return;const k=b.dataset.k;
+    if(k===R.a){const pts=4-gm.shown;gm.score+=pts;gm.done=true;gRender();$('#gRes').innerHTML=`<span class="ok">✅ Yes! I'm a .${R.a.toLowerCase()} file: +${pts} point${pts>1?'s':''}</span>`;}
+    else{if(!gm.tried.includes(k))gm.tried.push(k);gRender();$('#gRes').innerHTML=`<span class="no">❌ Not .${k.toLowerCase()}. Try again${gm.shown<3?' or reveal another clue':''}.</span>`;}});
+  $('#gNext')&&($('#gNext').onclick=()=>{gm.shown++;gRender();});
+  $('#gGive')&&($('#gGive').onclick=()=>{gm.done=true;gRender();$('#gRes').innerHTML=`It was <b>.${R.a.toLowerCase()}</b>. No points this time.`;});
+  $('#gRound')&&($('#gRound').onclick=()=>{if(gm.r<ROUNDS.length-1)gm.r++;else{gm.r=0;gm.score=0;}gm.shown=1;gm.done=false;gm.tried=[];gRender();});}
+gRender();
+
+/* ---------- 6 Brief ---------- */
+const FORMATS=['SVG','PNG','JPG','GIF','TIFF','BMP'];
+const SIZES={low:'Low (under 500 px)',medium:'Medium (about 1000–2000 px)',high:'High (3000+ px, print quality)',vector:'Vector (no pixels, any size)'};
+const JOBS=[
+ {i:'🪧',t:'Shop sign',d:'The logo printed 3 metres wide above the café door.',best:['SVG'],ok:[],size:['vector'],why:'A sign is huge. Even a massive bitmap would look blocky up close. A vector (SVG) is stored as maths, so it scales to any size with perfectly sharp edges.'},
+ {i:'📱',t:'Instagram post',d:"A photo of today's latte art to post on Instagram.",best:['JPG'],ok:['PNG'],size:['medium'],why:"It's a photo, so JPG is best because it gives a small file with millions of colours. Instagram shows posts at about 1080 px wide, so medium resolution is plenty. PNG works, but the file is much bigger."},
+ {i:'📄',t:'Printed menu',d:'An A5 menu with photos of cakes, sent to a print shop.',best:['TIFF'],ok:['JPG'],size:['high'],why:'Print needs far more pixels than a screen: about 300 per inch, or roughly 1750 × 2480 px for A5. TIFF is the print industry format. A high-quality JPG is also acceptable.'},
+ {i:'🖥️',t:'Website banner',d:'A big photo across the top of the café homepage. It must load fast on phones.',best:['JPG'],ok:['PNG'],size:['medium'],why:'JPG keeps photo files small. About 1920 px wide fills a laptop screen, and going higher just makes the page slow to load.'},
+ {i:'☕',t:'Logo on the website',d:'The logo in the corner of every page, on a see-through background.',best:['SVG'],ok:['PNG'],size:['vector','low'],why:"SVG stays sharp on every screen, is tiny, and supports transparency. PNG is the bitmap alternative because it can be see-through too. JPG can't, and would give the logo a white box around it."},
+ {i:'✨',t:'"We\'re open!" sticker',d:'A small flashing animated sticker for the website.',best:['GIF'],ok:[],size:['low'],why:'GIF is the classic format for simple animations with blocks of colour. It only needs to be small, so low resolution keeps the file tiny.'}];
+const bState=JOBS.map(()=>({done:false,right:false}));
+function bScore(){$('#bScore').textContent=`Score: ${bState.filter(s=>s.right).length} / ${JOBS.length}`;}
+function bRender(){const box=$('#bJobs');box.innerHTML='';JOBS.forEach((j,n)=>{const d=document.createElement('div');d.className='job';
+  d.innerHTML=`<div class="t">${j.i} ${j.t}</div><div class="d">${j.d}</div>
+  <div class="row" style="align-items:flex-end"><div><label>File type</label><select class="f"><option value="">Choose…</option>${FORMATS.map(f=>`<option>${f}</option>`).join('')}</select></div>
+  <div style="flex:1;min-width:170px"><label>Resolution</label><select class="s" style="width:100%"><option value="">Choose…</option>${Object.entries(SIZES).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select></div></div>
+  <div class="row"><button class="btn primary chk">Check</button></div><div class="fb"></div>`;
+  d.querySelector('.chk').onclick=()=>bCheck(d,n,false);box.appendChild(d);});bScore();}
+function bCheck(d,n,reveal){const j=JOBS[n],fEl=d.querySelector('.f'),sEl=d.querySelector('.s'),fb=d.querySelector('.fb');
+  if(reveal){fEl.value=j.best[0];sEl.value=j.size[0];}
+  const f=fEl.value,s=sEl.value;if(!f||!s){fb.className='fb show mid';fb.innerHTML='Choose a file type <b>and</b> a resolution first.';return;}
+  const fBest=j.best.includes(f),fOk=j.ok.includes(f),sOk=j.size.includes(s);let cls,head;
+  if(fBest&&sOk){cls='good';head='✅ Spot on!';}else if((fBest||fOk)&&sOk){cls='mid';head=`👍 ${f} works, but ${j.best.join(' or ')} is better.`;}
+  else if(fBest||fOk){cls='mid';head=`🤔 Good file type, but rethink the resolution.`;}else if(sOk){cls='mid';head=`🤔 Good resolution, but ${f} isn't the right file type.`;}else{cls='bad';head='❌ Not quite. Have another go.';}
+  bState[n].right=(fBest||fOk)&&sOk;
+  fb.className='fb show '+cls;fb.innerHTML=`<b>${head}</b>`+((cls!=='bad'||reveal)?`<br>${j.why}`:'');bScore();}
+$('#bAll').onclick=()=>document.querySelectorAll('.job').forEach((d,n)=>bCheck(d,n,true));
+$('#bReset').onclick=()=>{bState.forEach(s=>s.right=false);bRender();};
+bRender();
+</script>
+</body>
+</html>
